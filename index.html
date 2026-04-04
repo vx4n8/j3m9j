@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>REKON — Production Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0099FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="REKON PM">
 <style>
 :root{
   --blue:#0099FF;--blue-light:#e0f2ff;--blue-mid:#b8ddf8;
@@ -729,6 +734,13 @@ function showToast(msg){ const t=document.getElementById('toast');t.textContent=
 
 let autoT;
 document.addEventListener('input',()=>{ clearTimeout(autoT);autoT=setTimeout(()=>{if(cKey)saveJob();},3000); });
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/j3m9j/sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
