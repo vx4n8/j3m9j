@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REKON — Production Manager</title>
+<style>
+:root{
+  --blue:#0099FF;--blue-light:#e0f2ff;--blue-mid:#b8ddf8;
+  --bg:#f5f7fa;--white:#ffffff;--text:#111111;
+  --muted:#666666;--hint:#888888;
+  --border:#e0e8f0;--field-bg:#f0f4f8;--field-border:#d0dae8;
+  --danger:#c0392b;--danger-bg:#fdf0f0;--danger-border:#f5c6c6;
+  --success:#1a8048;--success-bg:#e8f7ee;--success-border:#a8dbbe;
+  --warn:#854f0b;--warn-bg:#faeeda;--warn-border:#f5c67a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:400;min-height:100vh;}
+header{background:var(--white);padding:24px 40px 0 52px;display:flex;flex-direction:column;}
+.logo-wrap{flex-shrink:0;padding-bottom:14px;}
+.logo-wrap svg{width:100%;height:auto;max-height:68px;}
+.header-blue-line{height:1.5px;background:var(--blue);margin:0 -52px 0 -52px;}
+main{max-width:860px;margin:0 auto;padding:20px 20px 100px;}
+.edition-label{font-size:11px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
+
+/* LANDING */
+#landingScreen{display:block;}
+#formScreen{display:none;}
+.landing-welcome{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px;margin-bottom:16px;position:relative;overflow:hidden;}
+.landing-welcome::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),#00ccff);}
+.welcome-greeting{font-size:1.45rem;font-weight:700;margin-bottom:6px;}
+.welcome-greeting span{color:var(--blue);}
+.welcome-sub{font-size:0.88rem;color:var(--muted);margin-bottom:22px;line-height:1.6;max-width:540px;}
+.name-setup{display:flex;gap:10px;align-items:center;}
+.name-setup input{flex:1;padding:10px 14px;border:1px solid var(--field-border);border-radius:6px;background:var(--field-bg);font-size:0.92rem;font-family:inherit;}
+.name-setup input:focus{outline:none;border-color:var(--blue);background:var(--white);}
+.name-setup button{padding:10px 22px;background:var(--blue);color:var(--white);border:none;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.name-setup button:hover{background:#0088ee;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-align:center;}
+.stat-num{font-size:1.75rem;font-weight:800;color:var(--blue);line-height:1;margin-bottom:4px;}
+.stat-label{font-size:0.76rem;color:var(--muted);line-height:1.4;}
+.recent-panel{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.recent-title{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.recent-empty{font-size:0.84rem;color:var(--hint);padding:16px 0;text-align:center;}
+.recent-job{display:flex;align-items:center;gap:14px;padding:10px 12px;background:var(--field-bg);border:1px solid var(--border);border-radius:7px;margin-bottom:8px;cursor:pointer;transition:all 0.13s;}
+.recent-job:last-child{margin-bottom:0;}
+.recent-job:hover{border-color:var(--blue);background:var(--blue-light);}
+.rj-info{flex:1;min-width:0;}
+.rj-name{font-size:0.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rj-meta{font-size:0.74rem;color:var(--muted);}
+.rj-del{padding:4px 8px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:4px;color:var(--danger);font-size:0.72rem;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.landing-actions{display:flex;gap:10px;margin-bottom:14px;}
+.land-btn{flex:1;padding:13px 18px;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.15s;border:1px solid;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+.land-btn.primary{background:var(--blue);color:var(--white);border-color:var(--blue);}
+.land-btn.primary:hover{background:#0088ee;}
+.land-btn.secondary{background:var(--white);color:var(--text);border-color:var(--border);}
+.land-btn.secondary:hover{background:var(--field-bg);border-color:var(--blue);}
+.load-list-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;display:none;}
+.saved-row{display:flex;align-items:center;gap:12px;padding:9px 12px;background:var(--field-bg);border:1px solid var(--border);border-radius:6px;margin-bottom:7px;}
+.saved-row:last-child{margin-bottom:0;}
+.saved-info{flex:1;min-width:0;}
+.saved-name{font-size:0.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.saved-meta{font-size:0.73rem;color:var(--muted);}
+.saved-actions{display:flex;gap:6px;flex-shrink:0;}
+.sv-btn{padding:5px 11px;border-radius:5px;font-size:0.78rem;font-weight:600;cursor:pointer;border:1px solid;font-family:inherit;}
+.sv-btn.load{border-color:var(--blue-mid);background:var(--blue-light);color:var(--blue);}
+.sv-btn.del{border-color:var(--danger-border);background:var(--danger-bg);color:var(--danger);}
+
+/* ASK REKON BAR */
+.ask-bar{background:var(--white);border:1px solid var(--blue-mid);border-radius:10px;padding:13px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.15s;margin-bottom:14px;}
+.ask-bar:hover{border-color:var(--blue);background:var(--blue-light);}
+.ask-dot{width:9px;height:9px;background:var(--blue);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.55;transform:scale(1.25);}}
+.ask-bar-text{flex:1;}
+.ask-bar-label{font-size:13px;font-weight:700;color:var(--blue);}
+.ask-bar-sub{font-size:11px;color:var(--muted);}
+.ask-bar-cta{font-size:0.8rem;font-weight:600;color:var(--blue);white-space:nowrap;}
+.ask-panel{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px;display:none;}
+.ask-panel.open{display:block;}
+.ask-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.ask-panel-title{font-size:14px;font-weight:700;flex:1;}
+.ask-close{background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:2px 6px;}
+.ask-prompt{font-size:0.82rem;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+.ask-input-row{display:flex;gap:8px;}
+.ask-ta{flex:1;padding:10px 12px;border:1px solid var(--field-border);border-radius:6px;background:var(--field-bg);font-size:0.86rem;font-family:inherit;resize:none;min-height:72px;line-height:1.5;}
+.ask-ta:focus{outline:none;border-color:var(--blue);background:var(--white);}
+.ask-send{padding:10px 16px;background:var(--blue);color:var(--white);border:none;border-radius:6px;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;align-self:flex-end;white-space:nowrap;}
+.ask-send:hover{background:#0088ee;}
+.ask-send:disabled{opacity:0.45;cursor:not-allowed;}
+.thinking{display:none;align-items:center;gap:8px;margin-top:10px;font-size:0.81rem;color:var(--muted);}
+.thinking.on{display:flex;}
+.dots span{display:inline-block;width:5px;height:5px;background:var(--blue);border-radius:50%;margin:0 2px;animation:bop 1.1s infinite;}
+.dots span:nth-child(2){animation-delay:.18s;}
+.dots span:nth-child(3){animation-delay:.36s;}
+@keyframes bop{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+.ask-result{margin-top:12px;padding:12px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:6px;font-size:0.83rem;line-height:1.6;display:none;}
+.ask-result.on{display:block;}
+.ask-apply{margin-top:9px;padding:8px 16px;background:var(--blue);color:var(--white);border:none;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;}
+.ask-apply:hover{background:#0088ee;}
+
+/* FORM */
+.form-topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.back-btn{padding:7px 13px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:0.81rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.back-btn:hover{border-color:var(--blue);color:var(--blue);}
+.form-job-lbl{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);flex:1;}
+.ref-banner{background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:10px 18px;margin-bottom:13px;display:flex;align-items:center;gap:14px;}
+.ref-lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);white-space:nowrap;}
+.ref-val{font-size:0.98rem;font-weight:700;color:var(--blue);flex:1;}
+.ref-status{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;background:var(--success-bg);color:var(--success);border:1px solid var(--success-border);}
+.prog-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 18px;margin-bottom:11px;display:flex;align-items:center;gap:16px;}
+.prog-lbl{font-size:0.76rem;color:var(--blue);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap;}
+.prog-track{flex:1;height:4px;background:var(--blue-light);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--blue);border-radius:2px;transition:width 0.4s;width:0%;}
+.prog-pct{font-size:0.9rem;font-weight:700;color:var(--blue);min-width:36px;text-align:right;}
+
+/* SECTIONS */
+.section{background:var(--white);border:1px solid var(--border);border-radius:8px;margin-bottom:11px;overflow:hidden;}
+.section-head{display:flex;align-items:center;gap:11px;padding:13px 18px;cursor:pointer;user-select:none;transition:background 0.12s;}
+.section-head:hover{background:var(--field-bg);}
+.section.open .section-head{border-bottom:1px solid var(--border);}
+.snum{width:26px;height:26px;background:var(--blue);color:var(--white);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.stitle{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;flex:1;}
+.ssum{font-size:0.74rem;color:var(--muted);margin-right:6px;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;}
+.schev{color:var(--muted);font-size:0.78rem;transition:transform 0.2s;flex-shrink:0;}
+.section.open .schev{transform:rotate(180deg);}
+.sbody{display:none;padding:18px 20px;}
+.section.open .sbody{display:block;}
+
+/* FIELDS */
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+.fr.t{grid-template-columns:1fr 1fr 1fr;}
+.fr.f{grid-template-columns:1fr;}
+.fr:last-child{margin-bottom:0;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+label .req{color:var(--blue);}
+input[type=text],input[type=date],input[type=time],input[type=email],input[type=tel],input[type=number],select,textarea{
+  width:100%;padding:8px 11px;border:1px solid var(--field-border);border-radius:6px;
+  background:var(--field-bg);color:var(--text);font-family:inherit;font-size:0.86rem;
+  transition:border-color 0.14s,background 0.14s;-webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);background:var(--white);}
+textarea{resize:vertical;min-height:68px;line-height:1.5;}
+.fn{font-size:0.71rem;color:var(--hint);margin-top:2px;}
+.auto-lbl{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--success);}
+.auto-f{background:#e8f7ee !important;border-color:var(--success-border) !important;color:var(--success) !important;cursor:default;}
+.sub{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin:15px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--blue-light);}
+.sub:first-child{margin-top:0;}
+
+/* YN */
+.yn{display:flex;}
+.yn-b{flex:1;padding:8px 0;border:1px solid var(--field-border);background:var(--field-bg);color:var(--muted);font-size:0.81rem;font-weight:600;cursor:pointer;transition:all 0.12s;font-family:inherit;}
+.yn-b:first-child{border-radius:6px 0 0 6px;border-right:none;}
+.yn-b:last-child{border-radius:0 6px 6px 0;}
+.yn-b.yes.on{background:var(--success-bg);border-color:var(--success-border);color:var(--success);}
+.yn-b.no.on{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger);}
+.yn-det{margin-top:7px;display:none;}
+.yn-det.show{display:block;}
+.yn-det input,.yn-det textarea,.yn-det select{margin-top:3px;}
+
+/* HOD */
+.hod-card{background:var(--field-bg);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:9px;}
+.hod-card:last-child{margin-bottom:0;}
+.hod-head{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap;}
+.hod-disc{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);flex:1;}
+.hod-sel{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;cursor:pointer;-webkit-appearance:none;appearance:none;font-family:inherit;letter-spacing:0.06em;}
+.hod-sel.tbc{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn);}
+.hod-sel.internal{background:var(--success-bg);border-color:var(--success-border);color:var(--success);}
+.hod-sel.external{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);}
+.hod-sel.na{background:var(--field-bg);border-color:var(--border);color:var(--muted);}
+.brief-b{font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid;}
+.brief-b.ns{background:var(--field-bg);color:var(--muted);border-color:var(--border);}
+.brief-b.sent{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-border);}
+.brief-b.recv{background:var(--success-bg);color:var(--success);border-color:var(--success-border);}
+
+/* CREW TABLE */
+.tbl-wrap{overflow-x:auto;}
+.dtbl{width:100%;border-collapse:collapse;font-size:0.81rem;}
+.dtbl th{text-align:left;padding:7px 7px;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;}
+.dtbl td{padding:5px 5px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl input,.dtbl select{padding:5px 7px;font-size:0.79rem;}
+.del-btn{padding:3px 7px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:4px;color:var(--danger);font-size:0.72rem;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.del-btn:hover{background:#f9d5d5;}
+.add-row{margin-top:9px;padding:7px 13px;background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--muted);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.14s;font-family:inherit;}
+.add-row:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+
+/* NET CONTACTS */
+.net-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:7px;align-items:center;margin-bottom:7px;}
+.net-row input{font-size:0.8rem;padding:6px 8px;}
+
+/* LOGISTICS */
+.log-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.log-item{background:var(--field-bg);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.log-lbl{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+
+/* VENUE */
+.venue-pend{background:var(--field-bg);border:1px dashed var(--border);border-radius:8px;padding:18px;text-align:center;color:var(--hint);font-size:0.82rem;margin-bottom:13px;}
+.venue-pend svg{display:block;margin:0 auto 7px;opacity:0.3;}
+
+/* ACTION BAR */
+.action-bar{position:sticky;bottom:0;background:var(--white);border-top:1px solid var(--border);padding:11px 18px;display:none;gap:9px;flex-wrap:wrap;z-index:100;}
+.action-bar.on{display:flex;}
+.act{display:flex;align-items:center;gap:5px;padding:9px 16px;border-radius:6px;font-size:0.84rem;font-weight:600;cursor:pointer;transition:all 0.14s;border:1px solid;font-family:inherit;}
+.act.p{background:var(--blue);color:var(--white);border-color:var(--blue);}
+.act.p:hover{background:#0088ee;}
+.act.s{background:transparent;color:var(--text);border-color:var(--border);}
+.act.s:hover{background:var(--field-bg);border-color:var(--blue);}
+.act.d{background:transparent;color:var(--danger);border-color:var(--danger-border);}
+.act.d:hover{background:var(--danger-bg);}
+.sp{flex:1;}
+
+/* FLOAT ASK */
+.float-wrap{position:fixed;bottom:75px;right:22px;z-index:200;display:none;}
+.float-btn{background:var(--blue);color:var(--white);border:none;border-radius:50px;padding:11px 18px;font-size:0.83rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(0,153,255,0.3);transition:all 0.14s;}
+.float-btn:hover{background:#0088ee;transform:translateY(-1px);}
+.float-panel{position:fixed;bottom:132px;right:22px;width:320px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.11);padding:16px;z-index:200;display:none;}
+.float-panel.open{display:block;}
+.fp-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.fp-title{font-size:13px;font-weight:700;flex:1;}
+.fp-close{background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;}
+.fp-ta{width:100%;padding:8px 11px;border:1px solid var(--field-border);border-radius:6px;background:var(--field-bg);font-size:0.83rem;font-family:inherit;resize:none;min-height:75px;margin-bottom:7px;}
+.fp-ta:focus{outline:none;border-color:var(--blue);}
+.fp-send{width:100%;padding:9px;background:var(--blue);color:var(--white);border:none;border-radius:6px;font-size:0.83rem;font-weight:600;cursor:pointer;font-family:inherit;}
+.fp-send:hover{background:#0088ee;}
+.fp-send:disabled{opacity:0.45;cursor:not-allowed;}
+.fp-resp{margin-top:9px;padding:9px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:6px;font-size:0.8rem;line-height:1.5;display:none;}
+.fp-resp.on{display:block;}
+.fp-apply{margin-top:7px;width:100%;padding:8px;background:var(--success);color:var(--white);border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;}
+
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(18px);background:var(--text);color:var(--white);padding:9px 18px;border-radius:6px;font-size:0.84rem;font-weight:500;opacity:0;transition:all 0.24s;pointer-events:none;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:600px){
+  header{padding:14px 16px 0;}
+  .header-blue-line{margin:0 -16px;}
+  .fr,.fr.t{grid-template-columns:1fr;}
+  .log-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr;}
+  .net-row{grid-template-columns:1fr 1fr;}
+  .float-panel{width:calc(100vw - 32px);right:16px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <svg width="100%" viewBox="0 0 900 100" xmlns="http://www.w3.org/2000/svg">
+      <text x="14" y="82" style="font-size:88px;font-weight:300;fill:#111;font-family:sans-serif;">R</text>
+      <text x="84" y="82" style="font-size:88px;font-weight:300;fill:#111;font-family:sans-serif;">E</text>
+      <text x="196" y="82" text-anchor="middle" style="font-size:88px;font-weight:300;fill:#0099FF;font-family:sans-serif;">K</text>
+      <text x="248" y="82" style="font-size:88px;font-weight:300;fill:#111;font-family:sans-serif;">O</text>
+      <text x="324" y="82" style="font-size:88px;font-weight:300;fill:#111;font-family:sans-serif;">N</text>
+      <text x="396" y="88" style="font-size:14px;font-weight:400;fill:#999;font-family:sans-serif;">©</text>
+      <line x1="420" y1="14" x2="420" y2="90" stroke="#ccc" stroke-width="1"/>
+      <text x="434" y="52" style="font-size:15px;font-weight:400;fill:#888;font-family:sans-serif;letter-spacing:0.14em;">PRODUCTION MANAGER,</text>
+      <text x="434" y="76" style="font-size:15px;font-weight:400;fill:#0099FF;font-family:sans-serif;letter-spacing:0.14em;">REDESIGNED</text>
+    </svg>
+  </div>
+  <div class="header-blue-line"></div>
+</header>
+
+<main>
+  <div class="edition-label">Live TV / Outside Broadcast — Production Manager Module</div>
+
+  <!-- LANDING -->
+  <div id="landingScreen">
+    <div class="landing-welcome">
+      <div class="welcome-greeting" id="wGreet">Welcome to <span>REKON</span></div>
+      <div class="welcome-sub" id="wSub">The first purpose-built pre-production platform for live broadcast and outside broadcast. One brief. Every HOD. Everything connected.</div>
+      <div class="name-setup" id="nameSetup">
+        <input type="text" id="nameInput" placeholder="Enter your name to get started" onkeydown="if(event.key==='Enter')saveName();">
+        <button onclick="saveName()">Let's Go</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">4+</div><div class="stat-label">Hours saved per production on average</div></div>
+      <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Times you'll re-enter the same venue data</div></div>
+      <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">Brief. Every HOD. Zero phone tag.</div></div>
+    </div>
+
+    <div class="ask-bar" onclick="toggleAsk()">
+      <div class="ask-dot"></div>
+      <div class="ask-bar-text">
+        <div class="ask-bar-label">Ask REKON</div>
+        <div class="ask-bar-sub">Describe your job — REKON fills in the form for you</div>
+      </div>
+      <div class="ask-bar-cta">Try it →</div>
+    </div>
+
+    <div class="ask-panel" id="askPanel">
+      <div class="ask-panel-head">
+        <div class="ask-dot"></div>
+        <div class="ask-panel-title">Hi, I'm REKON. Tell me about the job.</div>
+        <button class="ask-close" onclick="toggleAsk()">✕</button>
+      </div>
+      <div class="ask-prompt">Describe your production in plain language — show name, network, venue, dates, job type, PM name. I'll pull out the details and pre-fill the form.</div>
+      <div class="ask-input-row">
+        <textarea class="ask-ta" id="askTa" placeholder="e.g. Live NRL match for Fox Sports at Suncorp Stadium Brisbane. TX Saturday 14 June, kick off 7:30pm. Two-day job, bump in Friday. PM is Pat Roblin."></textarea>
+        <button class="ask-send" id="askSendBtn" onclick="sendAsk()">Fill Form</button>
+      </div>
+      <div class="thinking" id="askThink"><div class="dots"><span></span><span></span><span></span></div>REKON is reading your job...</div>
+      <div class="ask-result" id="askResult">
+        <div id="askResultTxt"></div>
+        <button class="ask-apply" onclick="applyAndOpen()">Open Job with these details →</button>
+      </div>
+    </div>
+
+    <div class="recent-panel">
+      <div class="recent-title">Recent Jobs</div>
+      <div id="recentList"></div>
+    </div>
+
+    <div class="landing-actions">
+      <button class="land-btn primary" onclick="newJob()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Job
+      </button>
+      <button class="land-btn secondary" onclick="toggleLoadList()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Load Job
+      </button>
+    </div>
+    <div class="load-list-wrap" id="loadListWrap"><div id="loadList"></div></div>
+  </div>
+
+  <!-- FORM -->
+  <div id="formScreen">
+    <div class="form-topbar">
+      <button class="back-btn" onclick="goLanding()">← Dashboard</button>
+      <div class="form-job-lbl" id="formLbl">New Job</div>
+    </div>
+    <div class="ref-banner"><span class="ref-lbl">REKON Ref</span><span class="ref-val" id="refVal">—</span><span class="ref-status">Active</span></div>
+    <div class="prog-wrap"><span class="prog-lbl">Completion</span><div class="prog-track"><div class="prog-fill" id="progFill"></div></div><span class="prog-pct" id="progPct">0%</span></div>
+
+    <!-- S1 JOB BASICS -->
+    <div class="section open" id="s1">
+      <div class="section-head" onclick="tSec('s1')"><div class="snum">01</div><div class="stitle">Job Basics</div><div class="ssum" id="ss1">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <div class="fr"><div class="fg"><label>Job / Project Title <span class="req">*</span></label><input type="text" id="jobTitle" placeholder="e.g. NRL Magic Round 2026" oninput="upAll();"></div><div class="fg"><label>Show Name</label><input type="text" id="showName" placeholder="e.g. NRL on Fox" oninput="upAll();"></div></div>
+        <div class="fr"><div class="fg"><label>Show Format</label><select id="showFormat" onchange="upAll();"><option value="">— Select —</option><option>Live Studio</option><option>Live OB / Remote</option><option>Panel Show</option><option>Sports Event</option><option>Corporate Broadcast</option><option>Conference / Event</option><option>News</option><option>Other</option></select></div><div class="fg"><label>Network / Client <span class="req">*</span></label><input type="text" id="network" placeholder="e.g. Fox Sports" oninput="upAll();"></div></div>
+        <div class="fr"><div class="fg"><label>Production Type</label><select id="prodType" onchange="upAll();"><option value="">— Select —</option><option>Simple / 2-Person Shoot</option><option>Corporate Live Event</option><option>Live TV / Panel Show OB</option><option>Specialty Camera / Remote Systems</option></select></div><div class="fg"><label>Location / City <span class="req">*</span></label><input type="text" id="location" placeholder="e.g. Brisbane, QLD" oninput="upAll();"></div></div>
+        <div class="fr t"><div class="fg"><label>TX Date <span class="req">*</span></label><input type="date" id="txDate" oninput="upAll();"></div><div class="fg"><label>TX Time</label><input type="time" id="txTime"></div><div class="fg"><label>Duration</label><input type="text" id="txDur" placeholder="e.g. 90 min"></div></div>
+        <div class="fr"><div class="fg"><label>Shoot Days</label><input type="number" id="shootDays" min="1" placeholder="1"></div><div class="fg"><label>PO / Job Number</label><input type="text" id="poNum" placeholder="e.g. PO-2026-047"></div></div>
+        <div class="fr f"><div class="fg"><span class="auto-lbl">REKON Reference (auto-generated)</span><input type="text" id="rekonRef" class="auto-f" readonly placeholder="Populates from show · location · TX date"></div></div>
+      </div>
+    </div>
+
+    <!-- S2 KEY CONTACTS -->
+    <div class="section" id="s2">
+      <div class="section-head" onclick="tSec('s2')"><div class="snum">02</div><div class="stitle">Key Contacts</div><div class="ssum" id="ss2">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <div class="sub">Host</div>
+        <div class="fr t"><div class="fg"><label>Name</label><input type="text" id="hostName" placeholder="Full name"></div><div class="fg"><label>Phone</label><input type="tel" id="hostPhone" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="hostEmail" placeholder="email@"></div></div>
+        <div class="sub">Executive Producer</div>
+        <div class="fr t"><div class="fg"><label>Name</label><input type="text" id="epName" placeholder="Full name" oninput="upAll();"></div><div class="fg"><label>Phone</label><input type="tel" id="epPhone" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="epEmail" placeholder="email@"></div></div>
+        <div class="sub">Producer</div>
+        <div class="fr t"><div class="fg"><label>Name</label><input type="text" id="prodName" placeholder="Full name"></div><div class="fg"><label>Phone</label><input type="tel" id="prodPhone" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="prodEmail" placeholder="email@"></div></div>
+        <div class="sub">Production Manager</div>
+        <div class="fr t"><div class="fg"><label>Name <span class="req">*</span></label><input type="text" id="pmName" placeholder="Full name" oninput="upAll();"></div><div class="fg"><label>Phone</label><input type="tel" id="pmPhone" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="pmEmail" placeholder="email@"></div></div>
+        <div class="sub">Production Assistant</div>
+        <div class="fr t"><div class="fg"><label>Name</label><input type="text" id="paName" placeholder="Full name"></div><div class="fg"><label>Phone</label><input type="tel" id="paPhone" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="paEmail" placeholder="email@"></div></div>
+      </div>
+    </div>
+
+    <!-- S3 NETWORK CONTACTS -->
+    <div class="section" id="s3">
+      <div class="section-head" onclick="tSec('s3')"><div class="snum">03</div><div class="stitle">Network / Base Contacts</div><div class="ssum" id="ss3">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <p style="font-size:0.81rem;color:var(--muted);margin-bottom:11px;">Label each role yourself — every network is different.</p>
+        <div id="netWrap"></div>
+        <button class="add-row" onclick="addNet()">+ Add Contact</button>
+      </div>
+    </div>
+
+    <!-- S4 HOD ASSIGNMENTS -->
+    <div class="section" id="s4">
+      <div class="section-head" onclick="tSec('s4')"><div class="snum">04</div><div class="stitle">HOD Assignments</div><div class="ssum" id="ss4">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <p style="font-size:0.81rem;color:var(--muted);margin-bottom:13px;">One HOD per discipline. Each confirmed assignment triggers their brief module. Internal / External / TBC tracks status.</p>
+        <div id="hodWrap"></div>
+      </div>
+    </div>
+
+    <!-- S5 CREW -->
+    <div class="section" id="s5">
+      <div class="section-head" onclick="tSec('s5')"><div class="snum">05</div><div class="stitle">Crew</div><div class="ssum" id="ss5">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <p style="font-size:0.81rem;color:var(--muted);margin-bottom:11px;">Add all crew manually. HODs will populate their own departments once their modules are built. On Site = location. At Base = studio / network side.</p>
+        <div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Supplied By</th><th>Location</th><th>Phone</th><th>Email</th><th></th></tr></thead><tbody id="crewBody"></tbody></table></div>
+        <button class="add-row" onclick="addCrew()">+ Add Crew Member</button>
+      </div>
+    </div>
+
+    <!-- S6 PERMISSIONS -->
+    <div class="section" id="s6">
+      <div class="section-head" onclick="tSec('s6')"><div class="snum">06</div><div class="stitle">Permissions</div><div class="ssum" id="ss6">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <p style="font-size:0.81rem;color:var(--muted);margin-bottom:11px;">Control who can see and edit what on this job. PM always has full access.</p>
+        <div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Name</th><th>Role</th><th>Access Level</th><th></th></tr></thead><tbody id="permBody"></tbody></table></div>
+        <button class="add-row" onclick="addPerm()">+ Add Person</button>
+      </div>
+    </div>
+
+    <!-- S7 SCHEDULE -->
+    <div class="section" id="s7">
+      <div class="section-head" onclick="tSec('s7')"><div class="snum">07</div><div class="stitle">Schedule</div><div class="ssum" id="ss7">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <p style="font-size:0.81rem;color:var(--muted);margin-bottom:11px;">Add all production days — travel, bump-in, rig, TX, bump-out.</p>
+        <div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Date</th><th>Day Type</th><th>Call Time</th><th>Notes</th><th></th></tr></thead><tbody id="schedBody"></tbody></table></div>
+        <button class="add-row" onclick="addSched()">+ Add Day</button>
+      </div>
+    </div>
+
+    <!-- S8 LOGISTICS -->
+    <div class="section" id="s8">
+      <div class="section-head" onclick="tSec('s8')"><div class="snum">08</div><div class="stitle">Logistics</div><div class="ssum" id="ss8">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <div class="log-grid">
+          <div class="log-item"><div class="log-lbl">Accommodation Required</div><div class="yn"><button class="yn-b yes" id="yn_accom_y" onclick="ynT('accom','yes')">Yes</button><button class="yn-b no" id="yn_accom_n" onclick="ynT('accom','no')">No</button></div><div class="yn-det" id="yd_accom"><input type="text" id="accom_d" placeholder="Hotel, booking ref, notes"></div></div>
+          <div class="log-item"><div class="log-lbl">Dress Code</div><select id="dressCode"><option value="">— Not specified —</option><option>All Black</option><option>Smart Casual</option><option>Branded / Uniform</option><option>Hi-Vis Required</option><option>PPE Required</option><option>Other</option></select><input type="text" id="dressNotes" placeholder="Notes / specifics" style="margin-top:6px;"></div>
+          <div class="log-item"><div class="log-lbl">Accreditation Required</div><div class="yn"><button class="yn-b yes" id="yn_accred_y" onclick="ynT('accred','yes')">Yes</button><button class="yn-b no" id="yn_accred_n" onclick="ynT('accred','no')">No</button></div><div class="yn-det" id="yd_accred"><input type="text" id="accred_d" placeholder="Contact / process / link"></div></div>
+          <div class="log-item"><div class="log-lbl">Site Induction Required</div><div class="yn"><button class="yn-b yes" id="yn_induct_y" onclick="ynT('induct','yes')">Yes</button><button class="yn-b no" id="yn_induct_n" onclick="ynT('induct','no')">No</button></div><div class="yn-det" id="yd_induct"><input type="text" id="induct_l" placeholder="Link or instructions"><input type="date" id="induct_dl" style="margin-top:5px;" title="Deadline"></div></div>
+          <div class="log-item"><div class="log-lbl">Catering</div><div class="yn"><button class="yn-b yes" id="yn_cater_y" onclick="ynT('cater','yes')">Yes</button><button class="yn-b no" id="yn_cater_n" onclick="ynT('cater','no')">No</button></div><div class="yn-det" id="yd_cater"><input type="text" id="cater_d" placeholder="Provided by / arrangements"></div></div>
+          <div class="log-item"><div class="log-lbl">Confidentiality</div><div class="yn"><button class="yn-b yes" id="yn_conf_y" onclick="ynT('conf','yes')">Yes</button><button class="yn-b no" id="yn_conf_n" onclick="ynT('conf','no')">No</button></div><div class="yn-det" id="yd_conf"><textarea id="conf_d" placeholder="NDA / embargo details" style="min-height:52px;margin-top:3px;"></textarea></div></div>
+          <div class="log-item"><div class="log-lbl">Safety Officer</div><div class="yn"><button class="yn-b yes" id="yn_safety_y" onclick="ynT('safety','yes')">Yes</button><button class="yn-b no" id="yn_safety_n" onclick="ynT('safety','no')">No</button></div><div class="yn-det" id="yd_safety"><input type="text" id="safety_n" placeholder="Name"><input type="tel" id="safety_p" placeholder="Phone" style="margin-top:5px;"></div></div>
+          <div class="log-item"><div class="log-lbl">Onsite Medic</div><div class="yn"><button class="yn-b yes" id="yn_medic_y" onclick="ynT('medic','yes')">Yes</button><button class="yn-b no" id="yn_medic_n" onclick="ynT('medic','no')">No</button></div><div class="yn-det" id="yd_medic"><input type="text" id="medic_n" placeholder="Name / provider"><input type="tel" id="medic_p" placeholder="Phone" style="margin-top:5px;"></div></div>
+        </div>
+        <div class="sub" style="margin-top:15px;">Invoicing</div>
+        <div class="fr t"><div class="fg"><label>PO Number</label><input type="text" id="inv_po" placeholder="Purchase order"></div><div class="fg"><label>Invoice To</label><input type="text" id="inv_co" placeholder="Billing company"></div><div class="fg"><label>Payment Terms</label><select id="inv_terms"><option value="">— Select —</option><option>7 days</option><option>14 days</option><option>30 days</option><option>60 days</option><option>On completion</option></select></div></div>
+        <div class="fr f"><div class="fg"><label>Billing Address</label><textarea id="inv_addr" placeholder="Full billing address" style="min-height:52px;"></textarea></div></div>
+      </div>
+    </div>
+
+    <!-- S9 VENUE -->
+    <div class="section" id="s9">
+      <div class="section-head" onclick="tSec('s9')"><div class="snum">09</div><div class="stitle">Venue</div><div class="ssum" id="ss9">Pending survey</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <div class="venue-pend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>Auto-populates from Technical Survey. You can also enter manually below.</div>
+        <div class="fr"><div class="fg"><label>Venue Name</label><input type="text" id="vName" placeholder="Auto-populated from survey"></div><div class="fg"><label>Venue Address</label><input type="text" id="vAddr" placeholder="Auto-populated from survey"></div></div>
+        <div class="fr"><div class="fg"><label>Access Notes</label><input type="text" id="vAccess" placeholder="Gate codes, loading dock, entry points"></div><div class="fg"><label>Parking</label><input type="text" id="vPark" placeholder="Auto-populated from survey"></div></div>
+        <div class="sub">Emergency Contacts</div>
+        <div class="fr t"><div class="fg"><label>Nearest Hospital</label><input type="text" id="emHosp" placeholder="Name"></div><div class="fg"><label>Hospital Address</label><input type="text" id="emHospA" placeholder="Address"></div><div class="fg"><label>Local Police</label><input type="text" id="emPol" placeholder="Station / number"></div></div>
+        <div class="fr f"><div class="fg"><label>Muster Point</label><input type="text" id="muster" placeholder="e.g. Eastern end of car park"></div></div>
+      </div>
+    </div>
+
+    <!-- S10 PM NOTES -->
+    <div class="section" id="s10">
+      <div class="section-head" onclick="tSec('s10')"><div class="snum">10</div><div class="stitle">PM Notes</div><div class="ssum" id="ss10">—</div><div class="schev">▾</div></div>
+      <div class="sbody">
+        <div class="fr f"><div class="fg"><label>General Notes</label><textarea id="pmNotes" placeholder="Anything else the team needs to know — special requirements, client sensitivities, OB notes, logistical quirks." style="min-height:110px;" oninput="upSums();"></textarea></div></div>
+      </div>
+    </div>
+
+  </div><!-- /formScreen -->
+</main>
+
+<!-- ACTION BAR -->
+<div class="action-bar" id="actionBar">
+  <button class="act s" onclick="saveJob()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save</button>
+  <button class="act s" onclick="exportJob()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+  <div class="sp"></div>
+  <button class="act d" onclick="closeJob()">Close Job</button>
+  <button class="act p" onclick="saveJob()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Job</button>
+</div>
+
+<!-- FLOAT ASK REKON -->
+<div class="float-wrap" id="floatWrap">
+  <div class="float-panel" id="floatPanel">
+    <div class="fp-head"><div class="ask-dot"></div><div class="fp-title">Ask REKON</div><button class="fp-close" onclick="tFloat()">✕</button></div>
+    <textarea class="fp-ta" id="fpTa" placeholder="Tell me more about this job and I'll update the fields..."></textarea>
+    <button class="fp-send" id="fpSend" onclick="sendFloat()">Update Form</button>
+    <div class="thinking" id="fpThink" style="margin-top:7px;"><div class="dots"><span></span><span></span><span></span></div>REKON is thinking...</div>
+    <div class="fp-resp" id="fpResp"><div id="fpRespTxt"></div><button class="fp-apply" onclick="applyFloat()">Apply →</button></div>
+  </div>
+  <button class="float-btn" onclick="tFloat()"><div class="ask-dot" style="width:7px;height:7px;"></div>Ask REKON</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE = 'rekon_pm_v1';
+const HODS = ['Director','Senior Camera / Camera Supervisor','Technical Manager','OB Manager','LX Director','Audio Director','Specialty Camera'];
+const HKEYS = ['dir','sc','tm','ob','lx','au','spcam'];
+const DEPTS = ['Director','Camera','Specialty Camera','LX','Audio','RF','EVS','CCU','Rigging','Broadcast Engineering','Vision Switching','Graphics','Communications','Floor','Staging','Makeup','Wardrobe','Production','Transport','Catering','Camera / Cablehand','Field Tech','Unit Management','Location Facilities','Commentator','Bunker','SNG / Satellite','Other'];
+
+let cKey=null, nCount=0, crCount=0, pmCount=0, scCount=0;
+let askData=null, floatData=null;
+
+window.addEventListener('DOMContentLoaded',()=>{ initHods(); addPerm(); addSched(); loadUser(); renderRecent(); });
+
+// USER
+function loadUser(){ const n=localStorage.getItem('rekon_user'); if(n) setGreet(n); }
+function saveName(){ const v=document.getElementById('nameInput').value.trim(); if(!v)return; localStorage.setItem('rekon_user',v); setGreet(v); document.getElementById('pmName').value=v; }
+function setGreet(n){ document.getElementById('wGreet').innerHTML=`Welcome back, <span>${n}</span>`; document.getElementById('wSub').textContent='Your production hub is ready. Pick up where you left off or start a new job.'; document.getElementById('nameSetup').style.display='none'; document.getElementById('pmName').value=n; }
+
+// LANDING
+function renderRecent(){
+  const jobs=getJobs(); const wrap=document.getElementById('recentList');
+  if(!jobs.length){ wrap.innerHTML='<div class="recent-empty">No saved jobs yet. Create your first job to get started.</div>'; return; }
+  wrap.innerHTML=jobs.slice(0,5).map(j=>`<div class="recent-job"><div class="rj-info" onclick="loadJob('${j.key}')"><div class="rj-name">${j.data.jobTitle||'Untitled'}</div><div class="rj-meta">${j.data.rekonRef||'—'} · ${j.data.network||''} · ${j.data._saved||''}</div></div><button class="rj-del" onclick="delJob('${j.key}')">Delete</button></div>`).join('');
+}
+
+function toggleAsk(){ document.getElementById('askPanel').classList.toggle('open'); }
+function toggleLoadList(){
+  const w=document.getElementById('loadListWrap'); const shown=w.style.display==='block';
+  w.style.display=shown?'none':'block';
+  if(!shown){ const jobs=getJobs(); const list=document.getElementById('loadList');
+    if(!jobs.length){list.innerHTML='<div style="font-size:0.83rem;color:var(--hint);padding:8px 0;">No saved jobs.</div>';return;}
+    list.innerHTML=jobs.map(j=>`<div class="saved-row"><div class="saved-info"><div class="saved-name">${j.data.jobTitle||'Untitled'}</div><div class="saved-meta">${j.data.rekonRef||'—'} · ${j.data._saved||''}</div></div><div class="saved-actions"><button class="sv-btn load" onclick="loadJob('${j.key}')">Load</button><button class="sv-btn del" onclick="delJob('${j.key}')">Delete</button></div></div>`).join('');
+  }
+}
+
+// ASK REKON - LANDING
+async function sendAsk(){
+  const input=document.getElementById('askTa').value.trim(); if(!input)return;
+  const btn=document.getElementById('askSendBtn'); const think=document.getElementById('askThink'); const res=document.getElementById('askResult');
+  btn.disabled=true; think.classList.add('on'); res.classList.remove('on');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`You are REKON, a production management assistant for live broadcast. Extract job details from the user description and return ONLY a valid JSON object with these exact keys (use empty string if unknown): jobTitle, showName, showFormat, network, prodType, location, txDate (YYYY-MM-DD), txTime (HH:MM), txDuration, shootDays, pmName, epName, venueName, venueAddr. For prodType use one of exactly: "Simple / 2-Person Shoot", "Corporate Live Event", "Live TV / Panel Show OB", "Specialty Camera / Remote Systems". For showFormat use one of exactly: "Live Studio", "Live OB / Remote", "Panel Show", "Sports Event", "Corporate Broadcast", "Conference / Event", "News", "Other". Return ONLY the JSON, no other text.`,messages:[{role:'user',content:input}]})});
+    const d=await r.json(); const raw=d.content?.[0]?.text||'{}';
+    askData=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const lbl={jobTitle:'Job',showName:'Show',showFormat:'Format',network:'Network',prodType:'Type',location:'Location',txDate:'TX Date',txTime:'TX Time',txDuration:'Duration',shootDays:'Shoot Days',pmName:'PM',epName:'EP',venueName:'Venue'};
+    let s='<strong>Extracted details:</strong><br><br>';
+    Object.entries(askData).forEach(([k,v])=>{if(v&&lbl[k])s+=`<strong>${lbl[k]}:</strong> ${v}<br>`;});
+    s+='<br>Click below to open the form with these details pre-filled.';
+    document.getElementById('askResultTxt').innerHTML=s; res.classList.add('on');
+  }catch(e){ document.getElementById('askResultTxt').innerHTML='Could not parse. Try rephrasing or fill the form manually.'; res.classList.add('on'); }
+  think.classList.remove('on'); btn.disabled=false;
+}
+
+function applyAndOpen(){ newJob(); if(askData)applyEx(askData); upAll(); toggleAsk(); }
+
+// ASK REKON - FLOAT
+function tFloat(){ document.getElementById('floatPanel').classList.toggle('open'); }
+async function sendFloat(){
+  const input=document.getElementById('fpTa').value.trim(); if(!input)return;
+  const btn=document.getElementById('fpSend'); const think=document.getElementById('fpThink'); const res=document.getElementById('fpResp');
+  btn.disabled=true; think.classList.add('on'); res.classList.remove('on');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`Extract any job details from the user message and return ONLY a JSON object with these keys (empty string if unknown): jobTitle, showName, showFormat, network, prodType, location, txDate (YYYY-MM-DD), txTime (HH:MM), txDuration, shootDays, pmName, epName, venueName, venueAddr. Return ONLY valid JSON.`,messages:[{role:'user',content:input}]})});
+    const d=await r.json(); const raw=d.content?.[0]?.text||'{}';
+    floatData=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const lbl={jobTitle:'Job',showName:'Show',network:'Network',location:'Location',txDate:'TX Date',pmName:'PM',venueName:'Venue'};
+    let s='<strong>Ready to apply:</strong><br>';
+    Object.entries(floatData).forEach(([k,v])=>{if(v&&lbl[k])s+=`${lbl[k]}: ${v}<br>`;});
+    document.getElementById('fpRespTxt').innerHTML=s; res.classList.add('on');
+  }catch(e){ document.getElementById('fpRespTxt').innerHTML='Could not parse. Try rephrasing.'; res.classList.add('on'); }
+  think.classList.remove('on'); btn.disabled=false;
+}
+function applyFloat(){ if(floatData){applyEx(floatData);upAll();} document.getElementById('floatPanel').classList.remove('open'); showToast('Form updated by REKON'); }
+
+function applyEx(d){ const s=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;}; s('jobTitle',d.jobTitle);s('showName',d.showName);s('showFormat',d.showFormat);s('network',d.network);s('prodType',d.prodType);s('location',d.location);s('txDate',d.txDate);s('txTime',d.txTime);s('txDur',d.txDuration);s('shootDays',d.shootDays);s('pmName',d.pmName);s('epName',d.epName);s('vName',d.venueName);s('vAddr',d.venueAddr); }
+
+// HOD CARDS
+function initHods(){
+  const w=document.getElementById('hodWrap');
+  w.innerHTML=HODS.map((disc,i)=>{const k=HKEYS[i];return`<div class="hod-card"><div class="hod-head"><div class="hod-disc">${disc}</div><select class="hod-sel tbc" id="hod_${k}_s" onchange="styleHod(this)"><option value="tbc">TBC</option><option value="internal">Internal</option><option value="external">External</option><option value="na">N/A this job</option></select><span class="brief-b ns" id="hod_${k}_b">Not Sent</span></div><div class="fr t"><div class="fg"><label>Name</label><input type="text" id="hod_${k}_n" placeholder="Full name" oninput="upSums();upProg();"></div><div class="fg"><label>Phone</label><input type="tel" id="hod_${k}_ph" placeholder="Mobile"></div><div class="fg"><label>Email</label><input type="email" id="hod_${k}_e" placeholder="email@"></div></div><div class="fr f"><div class="fg"><label>PM Nominated Crew (suggestions only)</label><input type="text" id="hod_${k}_c" placeholder="e.g. Jason Rey (LX Tech)"></div></div></div>`;}).join('');
+}
+function styleHod(s){ s.className='hod-sel '+(s.value||'tbc'); }
+
+// NETWORK CONTACTS
+function addNet(d){
+  const idx=nCount++; const w=document.getElementById('netWrap'); const div=document.createElement('div');
+  div.className='net-row'; div.dataset.idx=idx;
+  div.innerHTML=`<input type="text" id="net_${idx}_r" placeholder="Role / title" value="${d?.role||''}"><input type="text" id="net_${idx}_n" placeholder="Full name" value="${d?.name||''}"><input type="tel" id="net_${idx}_p" placeholder="Phone" value="${d?.phone||''}"><input type="email" id="net_${idx}_e" placeholder="Email" value="${d?.email||''}"><button class="del-btn" onclick="this.parentElement.remove();upSums();">✕</button>`;
+  w.appendChild(div); upSums();
+}
+
+// CREW
+function addCrew(d){
+  const idx=crCount++; const tb=document.getElementById('crewBody'); const tr=document.createElement('tr'); tr.dataset.idx=idx;
+  const dOpts=DEPTS.map(dep=>`<option value="${dep}" ${d?.dept===dep?'selected':''}>${dep}</option>`).join('');
+  tr.innerHTML=`<td><input type="text" id="cr_${idx}_n" placeholder="Full name" value="${d?.name||''}" style="min-width:100px;"></td><td><input type="text" id="cr_${idx}_r" placeholder="Role" value="${d?.role||''}" style="min-width:90px;"></td><td><select id="cr_${idx}_d" style="min-width:120px;"><option value="">— Dept —</option>${dOpts}</select></td><td><input type="text" id="cr_${idx}_s" placeholder="e.g. NEP / Fox / Freelance" value="${d?.sup||''}" style="min-width:100px;"></td><td><select id="cr_${idx}_l" style="min-width:95px;"><option value="">—</option><option value="on-site" ${d?.loc==='on-site'?'selected':''}>On Site</option><option value="at-base" ${d?.loc==='at-base'?'selected':''}>At Base</option></select></td><td><input type="tel" id="cr_${idx}_p" placeholder="Mobile" value="${d?.phone||''}" style="min-width:100px;"></td><td><input type="email" id="cr_${idx}_e" placeholder="Email" value="${d?.email||''}" style="min-width:130px;"></td><td><button class="del-btn" onclick="this.closest('tr').remove();upSums();">✕</button></td>`;
+  tb.appendChild(tr); upSums();
+}
+
+// PERMISSIONS
+function addPerm(d){
+  const idx=pmCount++; const tb=document.getElementById('permBody'); const tr=document.createElement('tr'); tr.dataset.idx=idx;
+  tr.innerHTML=`<td><input type="text" id="pm_${idx}_n" placeholder="Full name" value="${d?.name||''}"></td><td><input type="text" id="pm_${idx}_r" placeholder="e.g. Assistant PM" value="${d?.role||''}"></td><td><select id="pm_${idx}_l"><option value="full" ${!d||d.level==='full'?'selected':''}>Full Access</option><option value="view" ${d?.level==='view'?'selected':''}>View Only</option><option value="module" ${d?.level==='module'?'selected':''}>Module Only</option><option value="none" ${d?.level==='none'?'selected':''}>No Access</option></select></td><td><button class="del-btn" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tb.appendChild(tr);
+}
+
+// SCHEDULE
+function addSched(d){
+  const tb=document.getElementById('schedBody'); const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input type="date" data-f="date" value="${d?.date||''}" style="min-width:125px;"></td><td><select data-f="type" style="min-width:110px;"><option value="">— Type —</option><option ${d?.type==='Travel'?'selected':''}>Travel</option><option ${d?.type==='Bump In'?'selected':''}>Bump In</option><option ${d?.type==='Rig Day'?'selected':''}>Rig Day</option><option ${d?.type==='Rehearsal'?'selected':''}>Rehearsal</option><option ${d?.type==='TX Day'?'selected':''}>TX Day</option><option ${d?.type==='Bump Out'?'selected':''}>Bump Out</option><option ${d?.type==='Other'?'selected':''}>Other</option></select></td><td><input type="time" data-f="call" value="${d?.call||''}" style="min-width:85px;"></td><td><input type="text" data-f="notes" value="${d?.notes||''}" placeholder="Notes" style="min-width:150px;"></td><td><button class="del-btn" onclick="this.closest('tr').remove();upSums();">✕</button></td>`;
+  tb.appendChild(tr); upSums();
+}
+
+// YN
+function ynT(p,v){ const y=document.getElementById('yn_'+p+'_y'),n=document.getElementById('yn_'+p+'_n'),d=document.getElementById('yd_'+p); if(y)y.classList.toggle('on',v==='yes'); if(n)n.classList.toggle('on',v==='no'); if(d)d.classList.toggle('show',v==='yes'); }
+
+// SECTIONS
+function tSec(id){ document.getElementById(id).classList.toggle('open'); }
+
+// UPDATE ALL
+function upAll(){ upRef(); upProg(); upSums(); }
+
+function upRef(){
+  const show=document.getElementById('showName')?.value||document.getElementById('jobTitle')?.value||'';
+  const loc=document.getElementById('location')?.value||'';
+  const date=document.getElementById('txDate')?.value||'';
+  let ref='';
+  if(show)ref+=show.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,4);
+  if(loc)ref+=(ref?' · ':'')+loc.split(',')[0].trim().toUpperCase();
+  if(date){const d=new Date(date);ref+=(ref?' · ':'')+d.toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();}
+  const el=document.getElementById('rekonRef'); if(el)el.value=ref;
+  const rv=document.getElementById('refVal'); if(rv)rv.textContent=ref||'—';
+}
+
+function upProg(){
+  const fields=['jobTitle','network','location','txDate','pmName'];
+  const filled=fields.filter(id=>document.getElementById(id)?.value?.trim()).length;
+  const pct=Math.round((filled/fields.length)*100);
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progPct').textContent=pct+'%';
+}
+
+function upSums(){
+  const g=id=>document.getElementById(id)?.value||'';
+  const jt=g('jobTitle'),net=g('network');
+  document.getElementById('ss1').textContent=jt?(net?jt+' · '+net:jt):'—';
+  document.getElementById('ss2').textContent=g('pmName')||'—';
+  const nc=document.getElementById('netWrap')?.children.length||0;
+  document.getElementById('ss3').textContent=nc?nc+' contact'+(nc>1?'s':''):'—';
+  const hn=HKEYS.map(k=>g('hod_'+k+'_n')).filter(Boolean);
+  document.getElementById('ss4').textContent=hn.length?hn.length+' HOD'+(hn.length>1?'s':''):'—';
+  const cc=document.getElementById('crewBody')?.children.length||0;
+  document.getElementById('ss5').textContent=cc?cc+' crew member'+(cc>1?'s':''):'—';
+  const sc=document.getElementById('schedBody')?.children.length||0;
+  document.getElementById('ss7').textContent=sc?sc+' day'+(sc>1?'s':''):'—';
+  const notes=g('pmNotes');
+  document.getElementById('ss10').textContent=notes?notes.slice(0,28)+(notes.length>28?'…':''):'—';
+  const fl=document.getElementById('formLbl'); if(fl)fl.textContent=jt||'New Job';
+}
+
+// JOB MANAGEMENT
+function newJob(){ cKey='job_'+Date.now(); showForm(); upAll(); showToast('New job created'); }
+
+function showForm(){
+  document.getElementById('landingScreen').style.display='none';
+  document.getElementById('formScreen').style.display='block';
+  document.getElementById('actionBar').classList.add('on');
+  document.getElementById('floatWrap').style.display='block';
+}
+
+function goLanding(){
+  document.getElementById('landingScreen').style.display='block';
+  document.getElementById('formScreen').style.display='none';
+  document.getElementById('actionBar').classList.remove('on');
+  document.getElementById('floatWrap').style.display='none';
+  renderRecent();
+}
+
+function getJobs(){
+  try{ const r=localStorage.getItem(STORE); if(!r)return[]; const o=JSON.parse(r); return Object.entries(o).map(([k,d])=>({key:k,data:d})).sort((a,b)=>(b.data._ts||0)-(a.data._ts||0)); }catch{return[];}
+}
+
+function collectData(){
+  const g=id=>document.getElementById(id)?.value||'';
+  const ynv=p=>{const y=document.getElementById('yn_'+p+'_y');if(y?.classList.contains('on'))return'yes';const n=document.getElementById('yn_'+p+'_n');if(n?.classList.contains('on'))return'no';return'';};
+  const hods={};
+  HKEYS.forEach(k=>{hods[k]={status:g('hod_'+k+'_s'),name:g('hod_'+k+'_n'),phone:g('hod_'+k+'_ph'),email:g('hod_'+k+'_e'),crew:g('hod_'+k+'_c')};});
+  const nets=[];
+  document.querySelectorAll('#netWrap .net-row').forEach(row=>{const i=row.dataset.idx;nets.push({role:g('net_'+i+'_r'),name:g('net_'+i+'_n'),phone:g('net_'+i+'_p'),email:g('net_'+i+'_e')});});
+  const crew=[];
+  document.querySelectorAll('#crewBody tr').forEach(tr=>{const i=tr.dataset.idx;crew.push({name:g('cr_'+i+'_n'),role:g('cr_'+i+'_r'),dept:g('cr_'+i+'_d'),sup:g('cr_'+i+'_s'),loc:g('cr_'+i+'_l'),phone:g('cr_'+i+'_p'),email:g('cr_'+i+'_e')});});
+  const perms=[];
+  document.querySelectorAll('#permBody tr').forEach(tr=>{const i=tr.dataset.idx;perms.push({name:g('pm_'+i+'_n'),role:g('pm_'+i+'_r'),level:g('pm_'+i+'_l')});});
+  const sched=[];
+  document.querySelectorAll('#schedBody tr').forEach(tr=>{sched.push({date:tr.querySelector('[data-f=date]')?.value||'',type:tr.querySelector('[data-f=type]')?.value||'',call:tr.querySelector('[data-f=call]')?.value||'',notes:tr.querySelector('[data-f=notes]')?.value||''});});
+  return {jobTitle:g('jobTitle'),showName:g('showName'),showFormat:g('showFormat'),network:g('network'),prodType:g('prodType'),location:g('location'),txDate:g('txDate'),txTime:g('txTime'),txDur:g('txDur'),shootDays:g('shootDays'),poNum:g('poNum'),rekonRef:g('rekonRef'),
+    hostName:g('hostName'),hostPhone:g('hostPhone'),hostEmail:g('hostEmail'),epName:g('epName'),epPhone:g('epPhone'),epEmail:g('epEmail'),prodName:g('prodName'),prodPhone:g('prodPhone'),prodEmail:g('prodEmail'),pmName:g('pmName'),pmPhone:g('pmPhone'),pmEmail:g('pmEmail'),paName:g('paName'),paPhone:g('paPhone'),paEmail:g('paEmail'),
+    hods,nets,crew,perms,sched,
+    accom:ynv('accom'),accom_d:g('accom_d'),dressCode:g('dressCode'),dressNotes:g('dressNotes'),accred:ynv('accred'),accred_d:g('accred_d'),induct:ynv('induct'),induct_l:g('induct_l'),induct_dl:g('induct_dl'),cater:ynv('cater'),cater_d:g('cater_d'),conf:ynv('conf'),conf_d:g('conf_d'),safety:ynv('safety'),safety_n:g('safety_n'),safety_p:g('safety_p'),medic:ynv('medic'),medic_n:g('medic_n'),medic_p:g('medic_p'),
+    inv_po:g('inv_po'),inv_co:g('inv_co'),inv_terms:g('inv_terms'),inv_addr:g('inv_addr'),
+    vName:g('vName'),vAddr:g('vAddr'),vAccess:g('vAccess'),vPark:g('vPark'),emHosp:g('emHosp'),emHospA:g('emHospA'),emPol:g('emPol'),muster:g('muster'),
+    pmNotes:g('pmNotes')};
+}
+
+function applyData(d){
+  const s=(id,v)=>{const el=document.getElementById(id);if(el&&v!==undefined)el.value=v||'';};
+  s('jobTitle',d.jobTitle);s('showName',d.showName);s('showFormat',d.showFormat);s('network',d.network);s('prodType',d.prodType);s('location',d.location);s('txDate',d.txDate);s('txTime',d.txTime);s('txDur',d.txDur);s('shootDays',d.shootDays);s('poNum',d.poNum);
+  s('hostName',d.hostName);s('hostPhone',d.hostPhone);s('hostEmail',d.hostEmail);s('epName',d.epName);s('epPhone',d.epPhone);s('epEmail',d.epEmail);s('prodName',d.prodName);s('prodPhone',d.prodPhone);s('prodEmail',d.prodEmail);s('pmName',d.pmName);s('pmPhone',d.pmPhone);s('pmEmail',d.pmEmail);s('paName',d.paName);s('paPhone',d.paPhone);s('paEmail',d.paEmail);
+  if(d.hods)HKEYS.forEach(k=>{const h=d.hods[k]||{};s('hod_'+k+'_s',h.status);s('hod_'+k+'_n',h.name);s('hod_'+k+'_ph',h.phone);s('hod_'+k+'_e',h.email);s('hod_'+k+'_c',h.crew);const sel=document.getElementById('hod_'+k+'_s');if(sel)styleHod(sel);});
+  document.getElementById('netWrap').innerHTML='';nCount=0;
+  if(d.nets?.length)d.nets.forEach(n=>addNet(n)); else addNet();
+  document.getElementById('crewBody').innerHTML='';crCount=0;
+  if(d.crew?.length)d.crew.forEach(c=>addCrew(c));
+  document.getElementById('permBody').innerHTML='';pmCount=0;
+  if(d.perms?.length)d.perms.forEach(p=>addPerm(p));else addPerm();
+  document.getElementById('schedBody').innerHTML='';scCount=0;
+  if(d.sched?.length)d.sched.forEach(sc=>addSched(sc));else addSched();
+  ['accom','accred','induct','cater','conf','safety','medic'].forEach(p=>{if(d[p])ynT(p,d[p]);});
+  s('accom_d',d.accom_d);s('dressCode',d.dressCode);s('dressNotes',d.dressNotes);s('accred_d',d.accred_d);s('induct_l',d.induct_l);s('induct_dl',d.induct_dl);s('cater_d',d.cater_d);s('conf_d',d.conf_d);s('safety_n',d.safety_n);s('safety_p',d.safety_p);s('medic_n',d.medic_n);s('medic_p',d.medic_p);
+  s('inv_po',d.inv_po);s('inv_co',d.inv_co);s('inv_terms',d.inv_terms);s('inv_addr',d.inv_addr);
+  s('vName',d.vName);s('vAddr',d.vAddr);s('vAccess',d.vAccess);s('vPark',d.vPark);s('emHosp',d.emHosp);s('emHospA',d.emHospA);s('emPol',d.emPol);s('muster',d.muster);
+  s('pmNotes',d.pmNotes);
+}
+
+function saveJob(){
+  if(!cKey){showToast('No active job');return;}
+  const data=collectData();
+  data._saved=new Date().toLocaleString('en-AU',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  data._ts=Date.now();
+  try{const r=localStorage.getItem(STORE);const o=r?JSON.parse(r):{};o[cKey]=data;localStorage.setItem(STORE,JSON.stringify(o));showToast('Job saved ✓');}catch{showToast('Save failed');}
+}
+
+function loadJob(key){
+  try{const o=JSON.parse(localStorage.getItem(STORE)||'{}');const data=o[key];if(!data)return;cKey=key;showForm();applyData(data);upAll();showToast('Loaded: '+(data.jobTitle||'Untitled'));}catch{showToast('Failed to load');}
+}
+
+function delJob(key){
+  if(!confirm('Delete this job?'))return;
+  try{const o=JSON.parse(localStorage.getItem(STORE)||'{}');delete o[key];localStorage.setItem(STORE,JSON.stringify(o));if(cKey===key)cKey=null;renderRecent();toggleLoadList();toggleLoadList();showToast('Deleted');}catch{}
+}
+
+function closeJob(){ if(!confirm('Close job? Make sure you saved.'))return; cKey=null; goLanding(); }
+
+function exportJob(){
+  const data=collectData();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='rekon-pm-'+(data.rekonRef||'job').replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.json';a.click();URL.revokeObjectURL(url);showToast('Exported');
+}
+
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200); }
+
+let autoT;
+document.addEventListener('input',()=>{ clearTimeout(autoT);autoT=setTimeout(()=>{if(cKey)saveJob();},3000); });
+</script>
+</body>
+</html>
