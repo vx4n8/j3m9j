@@ -237,6 +237,31 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(18px);background:var(--text);color:var(--white);padding:9px 18px;border-radius:6px;font-size:0.84rem;font-weight:500;opacity:0;transition:all 0.24s;pointer-events:none;z-index:9999;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* VAULT NUDGE */
+.vault-nudge{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:6px;margin-top:6px;animation:fadeSlide 0.2s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.vault-nudge-dot{width:7px;height:7px;background:var(--blue);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite;}
+.vault-nudge-msg{font-size:0.79rem;color:var(--blue);flex:1;line-height:1.4;}
+.vault-nudge-btn{padding:4px 11px;background:var(--blue);color:var(--white);border:none;border-radius:20px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+.vault-nudge-btn:hover{background:#0088ee;}
+.vault-nudge-dismiss{background:none;border:none;color:var(--muted);font-size:0.85rem;cursor:pointer;padding:2px 4px;flex-shrink:0;}
+
+/* VAULT PICKER PANEL */
+.vault-picker{background:var(--white);border:1px solid var(--blue-mid);border-radius:8px;margin-top:4px;overflow:hidden;animation:fadeSlide 0.18s ease;}
+.vault-picker-head{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--field-bg);}
+.vault-picker-head input{flex:1;padding:5px 9px;border:1px solid var(--field-border);border-radius:5px;font-size:0.8rem;font-family:inherit;background:var(--white);}
+.vault-picker-head input:focus{outline:none;border-color:var(--blue);}
+.vault-picker-close{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:2px 5px;}
+.vault-picker-list{max-height:200px;overflow-y:auto;}
+.vault-picker-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;}
+.vault-picker-item:last-child{border-bottom:none;}
+.vault-picker-item:hover{background:var(--blue-light);}
+.vpi-av{width:30px;height:30px;border-radius:50%;background:#e0f0ff;color:#1060a0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.vpi-info{flex:1;min-width:0;}
+.vpi-name{font-size:0.83rem;font-weight:600;color:var(--text);}
+.vpi-sub{font-size:0.72rem;color:var(--muted);}
+.vault-picker-empty{padding:16px 12px;text-align:center;font-size:0.79rem;color:var(--hint);}
+
 @media(max-width:600px){
   header{padding:14px 16px 0;}
   .header-blue-line{margin:0 -16px;}
@@ -578,8 +603,165 @@ function addNet(d){
 function addCrew(d){
   const idx=crCount++; const tb=document.getElementById('crewBody'); const tr=document.createElement('tr'); tr.dataset.idx=idx;
   const dOpts=DEPTS.map(dep=>`<option value="${dep}" ${d?.dept===dep?'selected':''}>${dep}</option>`).join('');
-  tr.innerHTML=`<td><input type="text" id="cr_${idx}_n" placeholder="Full name" value="${d?.name||''}" style="min-width:100px;"></td><td><input type="text" id="cr_${idx}_r" placeholder="Role" value="${d?.role||''}" style="min-width:90px;"></td><td><select id="cr_${idx}_d" style="min-width:120px;"><option value="">— Dept —</option>${dOpts}</select></td><td><input type="text" id="cr_${idx}_s" placeholder="e.g. NEP / Fox / Freelance" value="${d?.sup||''}" style="min-width:100px;"></td><td><select id="cr_${idx}_l" style="min-width:95px;"><option value="">—</option><option value="on-site" ${d?.loc==='on-site'?'selected':''}>On Site</option><option value="at-base" ${d?.loc==='at-base'?'selected':''}>At Base</option></select></td><td><input type="tel" id="cr_${idx}_p" placeholder="Mobile" value="${d?.phone||''}" style="min-width:100px;"></td><td><input type="email" id="cr_${idx}_e" placeholder="Email" value="${d?.email||''}" style="min-width:130px;"></td><td><button class="del-btn" onclick="this.closest('tr').remove();upSums();">✕</button></td>`;
-  tb.appendChild(tr); upSums();
+  tr.innerHTML=`<td><input type="text" id="cr_${idx}_n" placeholder="Full name" value="${d?.name||''}" style="min-width:100px;"></td><td><input type="text" id="cr_${idx}_r" placeholder="Role" value="${d?.role||''}" style="min-width:90px;"></td><td><select id="cr_${idx}_d" style="min-width:120px;" onchange="onCrewDeptChange(${idx})"><option value="">— Dept —</option>${dOpts}</select></td><td><input type="text" id="cr_${idx}_s" placeholder="e.g. NEP / Fox / Freelance" value="${d?.sup||''}" style="min-width:100px;"></td><td><select id="cr_${idx}_l" style="min-width:95px;"><option value="">—</option><option value="on-site" ${d?.loc==='on-site'?'selected':''}>On Site</option><option value="at-base" ${d?.loc==='at-base'?'selected':''}>At Base</option></select></td><td><input type="tel" id="cr_${idx}_p" placeholder="Mobile" value="${d?.phone||''}" style="min-width:100px;"></td><td><input type="email" id="cr_${idx}_e" placeholder="Email" value="${d?.email||''}" style="min-width:130px;"></td><td><button class="del-btn" onclick="this.closest('tr').remove();upSums();">✕</button></td>`;
+  tb.appendChild(tr);
+
+  // After row is added, insert nudge row if Vault has people
+  if(!d) showVaultNudge(idx);
+  upSums();
+}
+
+// ── VAULT INTEGRATION ─────────────────────────────────────────────────────────
+function getVaultPeople(){
+  try{ const v=localStorage.getItem('rekon-vault'); if(!v)return []; return JSON.parse(v).people||[]; }catch(e){return [];}
+}
+
+const nudgeLines=[
+  "Adding crew? I've got people in your Vault — want me to look someone up?",
+  "Hey, your Vault might have this one covered. Want me to check?",
+  "Adding another one? I've built up quite a little black book in the Vault…",
+  "Vault's right here if you need it. Could save you some typing."
+];
+let nudgeIdx=0;
+
+function showVaultNudge(crewIdx){
+  const people=getVaultPeople();
+  if(!people.length) return; // silent if empty
+
+  const tb=document.getElementById('crewBody');
+  const nudgeTr=document.createElement('tr');
+  nudgeTr.id=`vault-nudge-row-${crewIdx}`;
+  nudgeTr.innerHTML=`<td colspan="8" style="padding:0 4px 6px;">
+    <div class="vault-nudge" id="vault-nudge-${crewIdx}">
+      <span class="vault-nudge-dot"></span>
+      <span class="vault-nudge-msg">${nudgeLines[nudgeIdx++ % nudgeLines.length]}</span>
+      <button class="vault-nudge-btn" onclick="openVaultPicker(${crewIdx})">Check Vault</button>
+      <button class="vault-nudge-dismiss" onclick="dismissVaultNudge(${crewIdx})" title="Dismiss">✕</button>
+    </div>
+  </td>`;
+  tb.appendChild(nudgeTr);
+}
+
+function dismissVaultNudge(crewIdx){
+  const row=document.getElementById(`vault-nudge-row-${crewIdx}`);
+  if(row) row.remove();
+  const picker=document.getElementById(`vault-picker-row-${crewIdx}`);
+  if(picker) picker.remove();
+}
+
+function onCrewDeptChange(crewIdx){
+  // If picker is open, re-filter it
+  const picker=document.getElementById(`vault-picker-row-${crewIdx}`);
+  if(picker) renderVaultPickerList(crewIdx);
+}
+
+function openVaultPicker(crewIdx){
+  // Remove nudge
+  const nudge=document.getElementById(`vault-nudge-row-${crewIdx}`);
+  if(nudge) nudge.remove();
+
+  // Don't open twice
+  if(document.getElementById(`vault-picker-row-${crewIdx}`)) return;
+
+  const tb=document.getElementById('crewBody');
+  const pickerTr=document.createElement('tr');
+  pickerTr.id=`vault-picker-row-${crewIdx}`;
+  pickerTr.innerHTML=`<td colspan="8" style="padding:0 4px 8px;">
+    <div class="vault-picker" id="vault-picker-${crewIdx}">
+      <div class="vault-picker-head">
+        <input type="text" placeholder="Search by name, role or discipline…" id="vault-search-${crewIdx}" oninput="renderVaultPickerList(${crewIdx})">
+        <button class="vault-picker-close" onclick="closeVaultPicker(${crewIdx})" title="Close">✕</button>
+      </div>
+      <div class="vault-picker-list" id="vault-picker-list-${crewIdx}"></div>
+    </div>
+  </td>`;
+  tb.appendChild(pickerTr);
+  renderVaultPickerList(crewIdx);
+  document.getElementById(`vault-search-${crewIdx}`).focus();
+}
+
+function closeVaultPicker(crewIdx){
+  const row=document.getElementById(`vault-picker-row-${crewIdx}`);
+  if(row) row.remove();
+}
+
+function renderVaultPickerList(crewIdx){
+  const people=getVaultPeople();
+  const q=(document.getElementById(`vault-search-${crewIdx}`)?.value||'').toLowerCase();
+  const dept=(document.getElementById(`cr_${crewIdx}_d`)?.value||'').toLowerCase();
+
+  let filtered=people.filter(p=>{
+    const matchQ=!q||p.name.toLowerCase().includes(q)||(p.role||'').toLowerCase().includes(q)||(p.discipline||'').toLowerCase().includes(q);
+    const matchD=!dept||!p.discipline||(p.discipline.toLowerCase().includes(dept)||dept.includes(p.discipline.toLowerCase()));
+    return matchQ && matchD;
+  });
+
+  const list=document.getElementById(`vault-picker-list-${crewIdx}`);
+  if(!filtered.length){
+    list.innerHTML=`<div class="vault-picker-empty">No matches in Vault — fill it in manually and I'll remember them.</div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(p=>`
+    <div class="vault-picker-item" onclick="applyVaultPerson(${crewIdx},'${p.id}')">
+      <div class="vpi-av">${p.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
+      <div class="vpi-info">
+        <div class="vpi-name">${p.name}</div>
+        <div class="vpi-sub">${[p.role,p.discipline,p.location].filter(Boolean).join(' · ')}</div>
+      </div>
+    </div>`).join('');
+}
+
+function applyVaultPerson(crewIdx, personId){
+  const people=getVaultPeople();
+  const p=people.find(x=>x.id===personId);
+  if(!p) return;
+
+  const s=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+  s(`cr_${crewIdx}_n`, p.name);
+  s(`cr_${crewIdx}_r`, p.role);
+  s(`cr_${crewIdx}_p`, p.phone);
+  s(`cr_${crewIdx}_e`, p.email);
+
+  // Match discipline to department dropdown
+  const dSel=document.getElementById(`cr_${crewIdx}_d`);
+  if(dSel && p.discipline){
+    const opts=Array.from(dSel.options);
+    const match=opts.find(o=>o.value.toLowerCase().includes(p.discipline.toLowerCase())||p.discipline.toLowerCase().includes(o.value.toLowerCase()));
+    if(match) dSel.value=match.value;
+  }
+
+  closeVaultPicker(crewIdx);
+  showToast(`${p.name} pulled from Vault ✓`);
+  upSums();
+}
+
+// Silent auto-save crew to Vault on job save
+function saveCrewToVault(){
+  const rows=document.getElementById('crewBody')?.querySelectorAll('tr[data-idx]')||[];
+  if(!rows.length) return;
+  let vault;
+  try{ vault=JSON.parse(localStorage.getItem('rekon-vault')||'{"people":[],"venues":[],"suppliers":[]}'); }catch(e){vault={people:[],venues:[],suppliers:[]};}
+
+  rows.forEach(tr=>{
+    const idx=tr.dataset.idx;
+    const name=(document.getElementById(`cr_${idx}_n`)?.value||'').trim();
+    if(!name) return;
+    // Only add if not already in Vault (match by name)
+    const exists=vault.people.some(p=>p.name.toLowerCase()===name.toLowerCase());
+    if(!exists){
+      vault.people.push({
+        id:'pm_'+Date.now().toString(36)+Math.random().toString(36).slice(2),
+        name,
+        role:document.getElementById(`cr_${idx}_r`)?.value||'',
+        discipline:document.getElementById(`cr_${idx}_d`)?.value||'',
+        phone:document.getElementById(`cr_${idx}_p`)?.value||'',
+        email:document.getElementById(`cr_${idx}_e`)?.value||'',
+        location:'',rate:'',tickets:[],notes:'',
+        jobs:[document.getElementById('jobTitle')?.value||'']
+      });
+    }
+  });
+  localStorage.setItem('rekon-vault',JSON.stringify(vault));
 }
 
 // PERMISSIONS
@@ -673,7 +855,7 @@ function collectData(){
   const nets=[];
   document.querySelectorAll('#netWrap .net-row').forEach(row=>{const i=row.dataset.idx;nets.push({role:g('net_'+i+'_r'),name:g('net_'+i+'_n'),phone:g('net_'+i+'_p'),email:g('net_'+i+'_e')});});
   const crew=[];
-  document.querySelectorAll('#crewBody tr').forEach(tr=>{const i=tr.dataset.idx;crew.push({name:g('cr_'+i+'_n'),role:g('cr_'+i+'_r'),dept:g('cr_'+i+'_d'),sup:g('cr_'+i+'_s'),loc:g('cr_'+i+'_l'),phone:g('cr_'+i+'_p'),email:g('cr_'+i+'_e')});});
+  document.querySelectorAll('#crewBody tr[data-idx]').forEach(tr=>{const i=tr.dataset.idx;crew.push({name:g('cr_'+i+'_n'),role:g('cr_'+i+'_r'),dept:g('cr_'+i+'_d'),sup:g('cr_'+i+'_s'),loc:g('cr_'+i+'_l'),phone:g('cr_'+i+'_p'),email:g('cr_'+i+'_e')});});
   const perms=[];
   document.querySelectorAll('#permBody tr').forEach(tr=>{const i=tr.dataset.idx;perms.push({name:g('pm_'+i+'_n'),role:g('pm_'+i+'_r'),level:g('pm_'+i+'_l')});});
   const sched=[];
@@ -712,7 +894,7 @@ function saveJob(){
   const data=collectData();
   data._saved=new Date().toLocaleString('en-AU',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   data._ts=Date.now();
-  try{const r=localStorage.getItem(STORE);const o=r?JSON.parse(r):{};o[cKey]=data;localStorage.setItem(STORE,JSON.stringify(o));showToast('Job saved ✓');}catch{showToast('Save failed');}
+  try{const r=localStorage.getItem(STORE);const o=r?JSON.parse(r):{};o[cKey]=data;localStorage.setItem(STORE,JSON.stringify(o));saveCrewToVault();showToast('Job saved ✓');}catch{showToast('Save failed');}
 }
 
 function loadJob(key){
