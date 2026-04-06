@@ -511,6 +511,7 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 <div class="toast" id="toast"></div>
 
 <script>
+const {ipcRenderer} = require('electron');
 const STORE = 'rekon_pm_v1';
 const HODS = ['Director','Senior Camera / Camera Supervisor','Technical Manager','OB Manager','LX Director','Audio Director','Specialty Camera'];
 const HKEYS = ['dir','sc','tm','ob','lx','au','spcam'];
@@ -527,19 +528,29 @@ function saveName(){ const v=document.getElementById('nameInput').value.trim(); 
 function setGreet(n){ document.getElementById('wGreet').innerHTML=`Welcome back, <span>${n}</span>`; document.getElementById('wSub').textContent='Your production hub is ready. Pick up where you left off or start a new job.'; document.getElementById('nameSetup').style.display='none'; document.getElementById('pmName').value=n; }
 
 // LANDING
-function renderRecent(){
-  const jobs=getJobs(); const wrap=document.getElementById('recentList');
-  if(!jobs.length){ wrap.innerHTML='<div class="recent-empty">No saved jobs yet. Create your first job to get started.</div>'; return; }
-  wrap.innerHTML=jobs.slice(0,5).map(j=>`<div class="recent-job"><div class="rj-info" onclick="loadJob('${j.key}')"><div class="rj-name">${j.data.jobTitle||'Untitled'}</div><div class="rj-meta">${j.data.rekonRef||'—'} · ${j.data.network||''} · ${j.data._saved||''}</div></div><button class="rj-del" onclick="delJob('${j.key}')">Delete</button></div>`).join('');
+async function renderRecent(){
+  const wrap=document.getElementById('recentList');
+  const lsJobs=getJobs().slice(0,5).map(j=>({key:j.key,title:j.data.jobTitle||'Untitled',ref:j.data.rekonRef||'—',network:j.data.network||'',saved:j.data._saved||'',source:'ls'}));
+  let fsJobs=[];
+  try{ const r=await ipcRenderer.invoke('list-jobs'); if(r.success) fsJobs=r.jobs.map(j=>({key:j.folder,title:j.jobTitle||'Untitled',ref:j.rekonRef||'—',network:'',saved:j.saved||'',source:'fs'})); }catch(e){}
+  const seen=new Set(lsJobs.map(j=>j.title));
+  const merged=[...lsJobs,...fsJobs.filter(j=>!seen.has(j.title))].slice(0,5);
+  if(!merged.length){ wrap.innerHTML='<div class="recent-empty">No saved jobs yet. Create your first job to get started.</div>'; return; }
+  wrap.innerHTML=merged.map(j=>`<div class="recent-job"><div class="rj-info" onclick="loadJob('${j.key}','${j.source}')"><div class="rj-name">${j.title}</div><div class="rj-meta">${j.ref} \u00B7 ${j.network} \u00B7 ${j.saved}</div></div>${j.source==='ls'?`<button class="rj-del" onclick="delJob('${j.key}')">Delete</button>`:''}</div>`).join('');
 }
 
 function toggleAsk(){ document.getElementById('askPanel').classList.toggle('open'); }
-function toggleLoadList(){
+async function toggleLoadList(){
   const w=document.getElementById('loadListWrap'); const shown=w.style.display==='block';
   w.style.display=shown?'none':'block';
-  if(!shown){ const jobs=getJobs(); const list=document.getElementById('loadList');
-    if(!jobs.length){list.innerHTML='<div style="font-size:0.83rem;color:var(--hint);padding:8px 0;">No saved jobs.</div>';return;}
-    list.innerHTML=jobs.map(j=>`<div class="saved-row"><div class="saved-info"><div class="saved-name">${j.data.jobTitle||'Untitled'}</div><div class="saved-meta">${j.data.rekonRef||'—'} · ${j.data._saved||''}</div></div><div class="saved-actions"><button class="sv-btn load" onclick="loadJob('${j.key}')">Load</button><button class="sv-btn del" onclick="delJob('${j.key}')">Delete</button></div></div>`).join('');
+  if(!shown){ const list=document.getElementById('loadList');
+    const lsJobs=getJobs().map(j=>({key:j.key,title:j.data.jobTitle||'Untitled',ref:j.data.rekonRef||'—',saved:j.data._saved||'',source:'ls'}));
+    let fsJobs=[];
+    try{ const r=await ipcRenderer.invoke('list-jobs'); if(r.success) fsJobs=r.jobs.map(j=>({key:j.folder,title:j.jobTitle||'Untitled',ref:j.rekonRef||'—',saved:j.saved||'',source:'fs'})); }catch(e){}
+    const seen=new Set(lsJobs.map(j=>j.title));
+    const merged=[...lsJobs,...fsJobs.filter(j=>!seen.has(j.title))];
+    if(!merged.length){list.innerHTML='<div style="font-size:0.83rem;color:var(--hint);padding:8px 0;">No saved jobs.</div>';return;}
+    list.innerHTML=merged.map(j=>`<div class="saved-row"><div class="saved-info"><div class="saved-name">${j.title}</div><div class="saved-meta">${j.ref} \u00B7 ${j.saved}</div></div><div class="saved-actions"><button class="sv-btn load" onclick="loadJob('${j.key}','${j.source}')">Load</button>${j.source==='ls'?`<button class="sv-btn del" onclick="delJob('${j.key}')">Delete</button>`:''}</div></div>`).join('');
   }
 }
 
@@ -826,7 +837,7 @@ function upSums(){
 }
 
 // JOB MANAGEMENT
-function newJob(){ cKey='job_'+Date.now(); showForm(); upAll(); showToast('New job created'); }
+function newJob(){ cKey='job_'+Date.now(); document.getElementById('formScreen').querySelectorAll('input,textarea,select').forEach(el=>el.value=''); showForm(); upAll(); showToast('New job created'); }
 
 function showForm(){
   document.getElementById('landingScreen').style.display='none';
@@ -894,11 +905,19 @@ function saveJob(){
   const data=collectData();
   data._saved=new Date().toLocaleString('en-AU',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
   data._ts=Date.now();
-  try{const r=localStorage.getItem(STORE);const o=r?JSON.parse(r):{};o[cKey]=data;localStorage.setItem(STORE,JSON.stringify(o));saveCrewToVault();showToast('Job saved ✓');}catch{showToast('Save failed');}
+  try{const r=localStorage.getItem(STORE);const o=r?JSON.parse(r):{};o[cKey]=data;localStorage.setItem(STORE,JSON.stringify(o));saveCrewToVault();showToast('Job saved ✓');ipcRenderer.invoke('save-job',data);}catch{showToast('Save failed');}
 }
 
-function loadJob(key){
-  try{const o=JSON.parse(localStorage.getItem(STORE)||'{}');const data=o[key];if(!data)return;cKey=key;showForm();applyData(data);upAll();showToast('Loaded: '+(data.jobTitle||'Untitled'));}catch{showToast('Failed to load');}
+async function loadJob(key,source){
+  try{
+    if(source==='fs'){
+      const r=await ipcRenderer.invoke('load-job',key);
+      if(!r.success){showToast('Failed to load from disk');return;}
+      cKey=key; showForm(); applyData(r.data); upAll(); showToast('Loaded: '+(r.data.jobTitle||'Untitled'));
+    } else {
+      const o=JSON.parse(localStorage.getItem(STORE)||'{}');const data=o[key];if(!data)return;cKey=key;showForm();applyData(data);upAll();showToast('Loaded: '+(data.jobTitle||'Untitled'));
+    }
+  }catch{showToast('Failed to load');}
 }
 
 function delJob(key){
