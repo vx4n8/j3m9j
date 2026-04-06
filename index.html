@@ -511,7 +511,7 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 <div class="toast" id="toast"></div>
 
 <script>
-const {ipcRenderer} = require('electron');
+const ipcRenderer = { invoke: async () => ({ success: false }) }; // browser stub
 const STORE = 'rekon_pm_v1';
 const HODS = ['Director','Senior Camera / Camera Supervisor','Technical Manager','OB Manager','LX Director','Audio Director','Specialty Camera'];
 const HKEYS = ['dir','sc','tm','ob','lx','au','spcam'];
